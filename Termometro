@@ -1,0 +1,188 @@
+-- Design Name: 
+-- Module Name:    Termometer - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+-- Este es un programa que permite generar un termometro digital sobre la tarjeta Nexys2
+-- Puede ser acoplabe a otro tipo de tarjetas con perifericos necesarios, utiliza AD0804.
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity Termometer is
+    Port ( Display : out  STD_LOGIC_VECTOR (6 downto 0);
+           Enable : out  STD_LOGIC_VECTOR (3 downto 0);
+			  ValTemperatura: in STD_LOGIC_VECTOR(7 downto 0); --Este es el valor de temperatura previamente convertido del AD0804.
+           clk : in  STD_LOGIC;
+           Reset : in  STD_LOGIC;
+           clkAD : out  STD_LOGIC;
+			  AlarmaPin: out STD_LOGIC;
+           Alarma : out  STD_LOGIC);
+end Termometer;
+
+architecture Behavioral of Termometer is
+
+begin
+
+P1:process (clk, reset)--Proceso principal de entidad.
+variable Temperatura: integer range 0 to 150:=0; --Temperatura máxima sobre LM35
+variable Unidades:    integer range 0 to 9;   --Variable que guarda los valores de temperatura.
+variable Decenas:     integer range 0 to 9;   --Variable que guarda decenas de temperatura
+variable Centenas:    integer range 0 to 9;   --Variable que guarda decenas de temperatura
+variable IteracionC:  integer range 0 to 1;   --Iteración indica los procesos que deben realizarse Centenas.
+variable IteracionD:  integer range 0 to 1;   --Iteración indica los procesos que deben realizarse Centenas.
+variable Visualizacion: integer range 0 to 50000000; --Contador para visualización dinamica en Display.
+variable AlarmaCiclo: integer range 0 to 100000000; --Variable para realizar oscilacion de alarma
+variable AlarmaFlag:  integer range 0 to 1:=0;--Flag de Alarma
+variable Temporal: integer range 0 to 12;--Variable temporal que tendrá decenas ó unidades.
+variable cicloADC: integer range 0 to 50001;--Variable para ciclo de reloj de conversor Análogo-Digital.
+begin
+
+if(clk='1' and clk'event) then --Permite establecer un sistema de lógica secuencial validando el estado del reloj.
+	if(Reset='1')then --Reinicio de entidad.
+	 Temperatura:=0;
+	 Centenas:=0;
+	 Decenas:=0;
+	 Unidades:=0;
+	 Temporal:=0;
+	end if;
+	
+	--Bloque de conversión de conversor Analogo-Digital 0804. A este se debe asignar un ciclo de reloj para convertir el dato de
+	--Entrada.
+	CicloADC:=CicloADC+1;
+	
+	if(CicloADC>25000)then
+	clkAD<='1';
+	else
+	clkAD<='0';
+	end if;
+	
+	if(CicloADC>50000)then
+	CicloADC:=0;
+	end if;
+  
+	
+	
+	Temperatura:=to_integer(unsigned(ValTemperatura));--Convertir el valor de temperatura en variable.
+	
+	if (Temperatura>=60)then
+	AlarmaFlag:=1;
+	else
+	AlarmaCiclo:=0;--Iniciar alarma en valor 0.
+	AlarmaFlag:=0;
+	Alarma<='0'; 
+	AlarmaPin<='0';
+	end if;
+	
+	if(AlarmaFlag=1)then
+	--AlarmaPin<='1';
+	AlarmaCiclo:=AlarmaCiclo+1;
+	if(AlarmaCiclo<50000000)then
+	AlarmaPin<='0';
+	Alarma<='0'; 
+	else
+	AlarmaPin<='1';
+	Alarma<='1'; 
+	end if;
+	if(AlarmaCiclo>80000000)then
+	AlarmaCiclo:=0;
+	end if;
+	else
+	AlarmaPin<='0';
+	Alarma<='0'; 
+	end if;
+	
+	--Estos bucles permiten indicar el valor de temperatura discriminado en unidades, decenas y centenas.
+	 if(Temperatura<100 and Temperatura>=10) then --Pregunta el rango entre 10 y 99
+	   --IteracionD:=1;
+	   bucle2: for b in 1 to 10 loop --Esta iteración permite establecer las centenas de temperatura.
+		Temperatura:=Temperatura-10;
+		Decenas:=Decenas+1;
+		if Temperatura<10 then
+		exit bucle2;
+		end if;
+		end loop;
+		end if;
+		
+	 if(Temperatura>=0 and Temperatura<10)then
+		Unidades:=Temperatura;
+		end if;
+	--	Temperatura:=105;
+	--Fin de bucle.
+	--Inicio de bucle de visualizacion Dinamica.
+	Visualizacion:=Visualizacion+1;--Incrementar contador Display  en una unidad.	
+		if(Visualizacion<250000  and Visualizacion>0)then
+				Temporal:=Decenas;
+				if(Decenas=0)then
+				Enable<="1111";-- Activar Display1
+				else
+				Enable<="1110";-- Activar Display1
+				end if;
+				Decenas:=0;
+				end if;
+		 
+		if(Visualizacion<500000 and Visualizacion>250000)then
+			   Temporal:=Unidades;
+				Enable<="1101";--Activar Display 2.
+				Unidades:=0;
+				end if; 
+				
+		if(Visualizacion<750000 and Visualizacion>500000)then
+			   Temporal:=10;
+				Enable<="1011";--Activar Display 2.
+				end if; 
+				
+		if(Visualizacion<1000000 and Visualizacion>750000)then
+			   Temporal:=11;
+				Enable<="0111";--Activar Display 2.
+				end if; 
+				
+		if(Visualizacion>1000000)then
+					IteracionD:=0;
+					IteracionC:=0;
+					Visualizacion:=0; --Reinicar contador.
+					Temperatura:=0;
+					end if;			
+			
+	  	         case Temporal is  --abcdefg
+					when 0=>Display<="0000001";
+				   when 1=>Display<="1001111";
+					when 2=>Display<="0010010";
+					when 3=>Display<="0000110";
+					when 4=>Display<="1001100";
+				   when 5=>Display<="0100100";
+					when 6=>Display<="1100000";
+					when 7=>Display<="0001111"; 
+					when 8=>Display<="0000000";
+					when 9=>Display<="0001100";
+					when 10=>Display<="0011100";
+					when 11=>Display<="0110001";
+		         when others=>null;
+					end case;
+					
+									
+			
+
+					
+	  
+end if;	
+end process;
+
+end Behavioral;
+
