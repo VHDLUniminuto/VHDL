@@ -1,0 +1,110 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    20:03:37 08/22/2015 
+-- Design Name: 
+-- Module Name:    Contadordosdigitos - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity Contadordosdigitos is
+    Port ( Display : out  STD_LOGIC_VECTOR (6 downto 0);
+           Enable : out  STD_LOGIC_VECTOR (3 downto 0);
+           clk : in  STD_LOGIC;
+           Reset : in  STD_LOGIC);
+end Contadordosdigitos;
+
+architecture Behavioral of Contadordosdigitos is
+
+begin
+process (clk,Reset)--Proceso para contador
+variable Delay: integer Range 0 to 50000001; --Rango de variable para retraso. el reloj es de 50Mhz.
+variable Contador: integer Range 0 to 10;   --Contador rango 0 a 99.
+variable Visualizacion: integer Range 0 to 50000000; --Contador para visualización dinamica en Display.
+variable Decenas:  integer range 0 to 10;--Unidades y decenas a ser visualizadas.
+variable Unidades: integer Range 0 to 9;
+variable Temporal: integer Range 0 to 9;--Variable temporal que tendrá decenas ó unidades.
+begin
+	
+	if(clk='1' and clk'event)then --Rising edge y clock event
+		
+		if(Reset='1')then --Si reset entonces reiniciar variables.
+		Contador:=0;
+		Decenas:=0;
+		Unidades:=0;
+		end if;	
+		
+		Visualizacion:=Visualizacion+1;--Incrementar contador Display  en una unidad.
+		Delay:=Delay+1;
+		
+		if(Delay<50000000)then
+		Delay:=Delay+1;-- Incrementar contador en una unidad.
+		else
+		Contador:=Contador+1;
+		Delay:=0;
+		end if;		
+			  
+				if(Contador>9)then--Si contador mayor a 9 entonces incrementar decenas
+				Decenas:=Decenas+1;
+				Contador:=0;
+				else
+				Unidades:=Contador;
+				end if;
+				
+				if(Decenas>9)then--Reiniciar Decenas.
+				Decenas:=0;
+				end if;
+				
+				if(Visualizacion<250000)then
+				Temporal:=Decenas;
+				Enable<="1110";-- Activar Display1
+				else
+				Temporal:=Unidades;
+				Enable<="1101";--Activar Display 2.
+			   end if;
+				
+				if(Visualizacion>500000)then
+				Visualizacion:=0; --Reinicar contador.
+				end if;
+				
+				   case Temporal  is  --abcdefg
+					when "0000"=>Display<="0000001";
+				   when 1=>Display<="1001111";
+					when 2=>Display<="0010010";
+					when 3=>Display<="0000110";
+					when 4=>Display<="1001100";
+				   when 5=>Display<="0100100";
+					when 6=>Display<="1100000";
+					when 7=>Display<="0001111"; 
+					when 8=>Display<="0000000";
+					when 9=>Display<="0001100";
+		         when others=>null;
+					end case;
+			
+			end if;
+end process;
+
+
+end Behavioral;
