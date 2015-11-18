@@ -1,0 +1,123 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    17:43:46 03/15/2015 
+-- Design Name: 
+-- Module Name:    UARTmodule - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+-- UART module permite enviar un conjunto de palabras (Words via serial port).
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity UARTmodule is
+    Port ( clk : in  STD_LOGIC;
+           BaudRatePin : out  STD_LOGIC;
+           Reset : in  STD_LOGIC;
+           TX : out  STD_LOGIC);
+end UARTmodule;
+
+architecture Behavioral of UARTmodule is
+signal Comando: unsigned(7 downto 0); --Vector de datos a ser enviado. comando debe ser unsigned
+begin
+P1: process (clk, Reset)--Proceso de logica secuencial.
+variable Contadorbits: Integer range 0 to 13:=0; --Variable de conteo de bits para FIFO. Start bit and Stop bit are included.
+variable CheckTransmision: integer range 0 to 1:=0; --Variable que indica si se esta estableciendo una transmision
+variable Baudrate: integer range 0 to 5208; --Delay para un baudrate de 9600 bits, Formula (1/9600)/(1/50Mhz)=52085
+variable Delay: integer range 0 to 26000001:=0;--Delay transmision. 50ms
+variable ContadorPalabras: integer range 0 to 10:=0; --Contador rango 0 a 10.
+begin
+
+if(clk='1' and clk'event)then
+if(Reset='1')then --Reiniciar todas las variables de proceso
+CheckTransmision:=0;
+Comando<="00000000";
+TX<='1'; --Estado inicial del proceso
+Contadorbits:=0;
+Delay:=0;
+end if;
+--Bloque de espera de 50ms para comenzar transmision
+if(Delay>2500000)then --Delay inicial. 50ms startup
+CheckTransmision:=1;
+Delay:=0;--Reset delay
+case ContadorPalabras is 
+when 0=>Comando<=to_unsigned(character 'pos('H'),8);
+when 1=>Comando<=to_unsigned(character 'pos('o'),8);
+when 2=>Comando<=to_unsigned(character 'pos('l'),8);
+when 3=>Comando<=to_unsigned(character 'pos('a'),8);
+when 4=>Comando<=to_unsigned(character 'pos(' '),8);
+when 5=>Comando<=to_unsigned(character 'pos('M'),8);
+when 6=>Comando<=to_unsigned(character 'pos('u'),8);
+when 7=>Comando<=to_unsigned(character 'pos('n'),8);
+when 8=>Comando<=to_unsigned(character 'pos('d'),8);
+when 9=>Comando<=to_unsigned(character 'pos('o'),8);
+when 10=>Comando<=to_unsigned(10,8);
+when others=>null;
+end case;
+ContadorPalabras:=ContadorPalabras+1;
+else
+if(CheckTransmision=0)then
+Delay:=Delay+1; --Incremento de Delay
+CheckTransmision:=0;
+end if;
+end if;
+
+--Generacion de transmision
+if(CheckTransmision=0)then --Chequear si hay transmision en curso.
+TX<='1'; --Estado inicial del proceso
+BaudRatePin<='0';--Clk output stop.
+else
+   if(Baudrate<=2604)then --Salida de reloj para comprobacion de Baudrate. Reloj 50% de duty cycle.
+    BaudRatePin<='1'; 
+	 else
+	 BaudRatePin<='0';
+	 end if;
+   Baudrate:=Baudrate+1; --Incrementar baudrate.
+		if(Baudrate>5208)then --delay de 104us
+		   Baudrate:=0;
+			Contadorbits:=Contadorbits+1; --Incremento de contador en una unidad.
+			if(Contadorbits>2 and Contadorbits<11 )then
+			  Comando<=Comando srl 1; --rotacion a la izquierda, las operaciones
+			  --sll, srl solamente funcionan con tipos signed o unsigned.
+			end if;
+			if(Contadorbits=13)then
+			Contadorbits:=0;
+			CheckTransmision:=0;
+			Delay:=0;
+			end if;
+			Baudrate:=0; --Restart baudrate.
+		end if; 
+		
+		case Contadorbits is
+		when 1=>TX<='0'; --0 state iniciacion de bit de inicio de transmision
+	   when 2 to 10=>TX<=Comando(0); --0 state iniciacion de bit de inicio de transmision
+		when 11=>TX<='1'; --bit de parada en este caso solo 1.
+		when 12=>TX<='1'; --Restablecer linea de comuncacion serial.
+		when others=>TX<='1';
+		end case;
+end if;
+end if;
+end process;
+
+
+end Behavioral;
+
