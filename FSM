@@ -1,0 +1,85 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date:    09:32:33 09/24/2015 
+-- Design Name: 
+-- Module Name:    FSM - Behavioral 
+-- Project Name: 
+-- Target Devices: 
+-- Tool versions: 
+-- Description: 
+--
+-- Dependencies: 
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+-- Additional Comments: 
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx primitives in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity FSM is
+    Port ( clk : in  STD_LOGIC;
+           salida : out  STD_LOGIC_VECTOR (1 downto 0);
+           x : in  STD_LOGIC);
+end FSM;
+
+architecture Behavioral of FSM is
+type estado is(cero,uno,dos,tres);
+signal es_actual,es_futuro:estado;
+begin
+
+process(clk)--Cambio de estado
+variable counter: integer range 0 to 100000001;
+	
+	begin
+	if(clk='1' and clk'event)then
+	counter:=counter+1;--contador.
+	if(counter>100000000)then--El incremento de la variable debe vaidarse siempre de manera sincronica.
+	es_actual<=es_futuro;
+	counter:=0;
+	end if;
+	end if;
+	
+	
+	
+end process;	
+
+process(x,es_actual)--maquina de estado
+	begin
+	
+	case es_actual is
+	when cero=>
+		salida<="00";
+		if(x='1')then
+		es_futuro<=uno;
+		else
+		es_futuro<=cero;
+		end if;
+	when uno=>
+		salida<="01";
+		es_futuro<=dos;
+	when dos=>
+		salida<="10";
+		es_futuro<=tres;
+	when tres=>
+		salida<="11";
+		es_futuro<=cero;
+	end case;
+		
+	
+end process;
+
+
+end Behavioral;
