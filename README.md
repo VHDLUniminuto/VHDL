@@ -25,4 +25,7 @@ Para más información de las herramientas de desarrollo usadas en este reposito
 
 
 #Canal youtube
-Todos los códigos de este repositorio han sido probados. Para ver la explicación de cada archivo y su funcionamiento por favor vaya al siguiente link: 
+Todos los códigos de este repositorio han sido probados. Para ver la explicación de cada archivo y su funcionamiento por favor vaya al siguiente links: 
+
+Introducción: https://youtu.be/Aop83CXrKp8
+
