@@ -29,5 +29,5 @@ Todos los códigos de este repositorio han sido probados. Para ver la explicaci�
 
 Introducción: https://youtu.be/Aop83CXrKp8
 
-Explicación conceptos ejercicio secuencia neumática: https://youtu.be/4QOJtXJQipU
+Explicación conceptos ejercicio secuencia neumática (Parte I): https://youtu.be/4QOJtXJQipU
 
