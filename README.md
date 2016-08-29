@@ -22,3 +22,7 @@ Para más información de las herramientas de desarrollo usadas en este reposito
 3. Adept: http://www.digilentinc.com/Products/Detail.cfm?NavPath=2,66,69&Prod=ADEPT&CFID=20508871&CFTOKEN=285d49e213e4a4ed-1094B6C9-5056-0201-0233638070DAAAC2 
 4. LCD: https://www.sparkfun.com/datasheets/LCD/HD44780.pdf
 6. Conversor USB-UART: http://www.amazon.co.uk/UART-CP2102-Module-Serial-Converter/dp/B00AFRXKFU
+
+
+#Canal youtube
+Todos los códigos de este repositorio han sido probados. Para ver la explicación de cada archivo y su funcionamiento por favor vaya al siguiente link: 
